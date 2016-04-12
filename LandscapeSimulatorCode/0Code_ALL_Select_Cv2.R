@@ -1,7 +1,7 @@
 ## To Do:
 ## Input matrices for environment, starting population size, carrying capacity,
 ## unsuitable habitat, starting allele frequency chosen from beta
-
+source("Code_AllSourceFiles20160320.R")
 LandSHARC_IBD <- function(outDir, LocusType, 
                       InitialPopMat, 
                       pMat, # a value or matrix
@@ -14,55 +14,41 @@ LandSHARC_IBD <- function(outDir, LocusType,
                       AlleeDensity = 2, 
                       MoviePopSize = FALSE, MoviePopGenFreq = 100,
                       ENVI_matrix = NULL,  
-                      s_high = NULL, s_low=-s_high){
+                      s_high = NULL, s_low=-s_high, runname=NA){
 
-	
-	
 #############################################################		
-	########### ARE INPUT FILES THERE ?????? #########################
-	##################################################################
-# 	if (is.null(outDir)==TRUE){print ("Missing the head directory for output: outDir")}
-# 	if (is.null(FileName_ResultsFST)==TRUE){print ("Missing the FST results filename")}
-# 	if (is.null(FileName_LandscapeMetadata)==TRUE){print ("Missing the LandscapeMetadata filename")}
-# 	
-# 	
-# 	if (is.null(MODEL_TYPE)==TRUE){print("Please enter  model type (IBD, REFUGIA, ISLAND)")	}
-# 	if (is.null(LOCUS_TYPE)==TRUE){print("Please enter locus type (NEUTRAL, SELECTION)")	}
-# 	if (is.null(X_Demes)==TRUE){print("Missing Landscape Size (X)")}	
-# 	if (is.null(Y_Demes)==TRUE){print("Missing Landscape Size (Y)")}
-# 		
-# 	if (is.null(u)==TRUE){print ("Missing mutation rate: u")}
-# 	if (is.null(p_start)==TRUE){print ("Missing starting allele freq: p_start")}
-# 	
-# 	if (is.null(GEN)==TRUE){print ("Missing GEN")}
-# 	
-# 	if (LOCUS_TYPE == "SELECTION") {
+########### ARE INPUT FILES THERE ?????? #########################
+##################################################################
+ 	if (is.null(outDir)==TRUE){print ("Missing the head directory for output: outDir")}
+ 	if (is.null(LocusType)==TRUE){print("Please enter locus type (NEUTRAL, SELECTION)")	}
+ 	if (is.null(InitialPopMat)==TRUE){print("Missing Initial population matrix: InitialPopMat")}			
+ 	if (is.null(u)==TRUE){print ("Missing mutation rate: u")}
+ 	if (is.null(pMat)==TRUE){print ("Missing starting allele freq: pMat")} 	
+ 	if (is.null(Gen)==TRUE){print ("Missing Gen")}	
+# 	if (LocusType == "SELECTION") {
 # 			if (is.null(ENVI_ID)==TRUE){print ("Missing environment file: ENVI_ID")}
 # 			if (is.null(ENVI_DIR)==TRUE){print ("Missing directory for the ENVI file: ENVI_DIR")}
 # 			if (is.null(s_low)==TRUE){print ("Missing s_low")}
 # 			if (is.null(s_high)==TRUE){print ("Missing s_high")}
 # 		}
 
-#############################################################	
 	#########################################
 	#Get name for this run
 	#########################################
-#############################################################		
-	runname <- getRunName() 
-	SetOrCreateDir(headDir)
-	 if (file.exists(paste(headDir, subfolder, sep=""))){}else{dir.create(paste(headDir, subfolder, sep=""))}
-	   MovieDirname <- paste(headDir,subfolder,"/", runname,"Movie",sep="")
-        dir.create(MovieDirname)
-	
-#############################################################			
-	#########################################
+	if(is.na(runname)){runname <- getRunName()}
+  if (file.exists(outDir)){
+    setwd(outDir); print(c("Moving to existing output directory", getwd()))
+  } else {
+    dir.create(outDir); ; print(c("Creating output directory", getwd()))
+  }
+
+	 MovieDirname <- paste(outDir,"/", runname,"Movie",sep="")
+    dir.create(MovieDirname)
 		
-#############################################################		
 	#########################################
-	####If LOCUS_TYPE=="SELECTION", Input Environment
+	####If LocusType=="SELECTION", Input Environment
 	#########################################	
-#############################################################	
-if (LOCUS_TYPE=="SELECTION"){
+if (LocusType=="SELECTION"){
 		ENVI_ID <- as.character(ENVI_ID)
 		Envi <- GetEnvi(ENVI_ID, ENVI_DIR)
 		EnviFile <- read.table(paste(ENVI_DIR, "All_Environments_Metadata.txt", sep=""))
@@ -94,44 +80,33 @@ if (LOCUS_TYPE=="SELECTION"){
 		image.plot(X_Locs,Y_Locs, matrix(s_VECT, ncol=Y_Demes), main=paste( "s_min=",round(min_s,5), " ,s_max=", round(max_s,5),  sep=""), cex.main=0.7, col=two.colors(n=200, start="blue", end="red", middle="white", alpha=1.0))	
 		dev.off()
 
- 	}
-#############################################################			
+ 	}# end if selection
+		
 	#########################################
 	#Print Run Metadata
 	#########################################	
-#############################################################	
-# 		setwd(MovieDirname)
-# 		Metadatafile <- paste(runname,"Metadata",sep="")
-# 		write(runname, file= Metadatafile) 
-# 		write(paste("Date=",date()), file= Metadatafile, append=TRUE)
-# 		write(paste("CodeDir=",CodeDir), file= Metadatafile, append=TRUE)
-# 		write(paste("headDir=",headDir), file= Metadatafile, append=TRUE)
-# 		write(paste("subfolder=",subfolder), file= Metadatafile, append=TRUE) 
-# 		write(paste("FileName_ResultsFST=",FileName_ResultsFST), file= Metadatafile, append=TRUE)			
-# 		write(paste("FSTgen=",FSTgen), file= Metadatafile, append=TRUE)
-# 		write(paste("FileName_LandscapeMetadata=",FileName_LandscapeMetadata), file= Metadatafile, append=TRUE) 
-# 		write(paste("MODEL_TYPE=",MODEL_TYPE), file= Metadatafile, append=TRUE)
-# 		write(paste("LOCUS_TYPE=",LOCUS_TYPE), file= Metadatafile, append=TRUE)
-# 		write(paste("X_Demes=",X_Demes), file= Metadatafile, append=TRUE)
-# 		write(paste("Y_Demes=",Y_Demes), file= Metadatafile, append=TRUE)
-# 		write(paste("Scale=",Scale), file= Metadatafile, append=TRUE)
-# 		write(paste("u=",u), file= Metadatafile, append=TRUE)			
-# 		write(paste("p_start=",p_start), file= Metadatafile, append=TRUE)
-# 		write(paste("GEN=",GEN), file= Metadatafile, append=TRUE)
-# 		write(paste("LandscapeMatGen=",LandscapeMatGen), file= Metadatafile, append=TRUE)
-# 		write(paste("MOVIE=",MOVIE), file= Metadatafile, append=TRUE)
-# 		write(paste("MOVIEgen=",MOVIEgen), file= Metadatafile, append=TRUE)
-# 		write(paste("DispersalKernel_FilePath=",DispersalKernel_FilePath), file= Metadatafile, append=TRUE)
-# 		write(paste("K_All=",K_All), file= Metadatafile, append=TRUE)
-# 		write(paste("GEN_Refugia=",GEN_Refugia), file= Metadatafile, append=TRUE)
-# 		write(paste("r_growth=",r_growth), file= Metadatafile, append=TRUE)
-# 		write(paste("Refugia_StartMat_FilePath=",Refugia_StartMat_FilePath), file= Metadatafile, append=TRUE)
-# 		write(paste("AlleeDensity=",AlleeDensity), file= Metadatafile, append=TRUE)
-# 		write(paste("MOVIE_Density=",MOVIE_Density), file= Metadatafile, append=TRUE)
-# 		write(paste("Refugia_Selection=",Refugia_Selection), file= Metadatafile, append=TRUE)
-# 		write(paste("m=",m), file= Metadatafile, append=TRUE)
-# 		write(paste("IslandSize=",IslandSize), file= Metadatafile, append=TRUE)
-# 		write(paste("Island_N=",Island_N), file= Metadatafile, append=TRUE)
+  X_Demes <- nrow(InitialPopMat)
+  Y_Demes <- ncol(InitialPopMat)
+ 		Metadatafile <- paste(outDir,"/",runname,"Metadata",sep="")
+ 		write(runname, file= Metadatafile) 
+ 		write(paste("Date=",date()), file= Metadatafile, append=TRUE)
+ 		write(paste("LocusType=",LocusType), file= Metadatafile, append=TRUE)
+ 		write(paste("X_Demes=",X_Demes), file= Metadatafile, append=TRUE)
+ 		write(paste("Y_Demes=",Y_Demes), file= Metadatafile, append=TRUE)
+    write(paste("InitialPopMat=", paste(InitialPopMat, collapse=",")), file= Metadatafile, append=TRUE)
+ 		write(paste("u=",u), file= Metadatafile, append=TRUE)			
+ 		write(paste("pMat=",paste(pMat, collapse=",")), file= Metadatafile, append=TRUE)
+ 		write(paste("Gen=",gen), file= Metadatafile, append=TRUE)
+ 		write(paste("LandscapeMatGen=",LandscapeMatGen), file= Metadatafile, append=TRUE)
+ 		write(paste("DispersalKernel=", paste(DispersalKernel, collapse="")), file= Metadatafile, append=TRUE)
+ 		write(paste("Kmat=",paste(Kmat, collapse=",")), file= Metadatafile, append=TRUE)
+ 		write(paste("r_growth=",r_growth), file= Metadatafile, append=TRUE)
+   	write(paste("AlleeDensity=",AlleeDensity), file= Metadatafile, append=TRUE)
+
+  	write(paste("MoviePfreq=",MoviePfreq), file= Metadatafile, append=TRUE)
+    write(paste("MoviePGenFreq=",MoviePGenFreq), file=Metadatafile, append=TRUE)
+    write(paste("MoviePopSize=",MoviePopSize), file=Metadatafile, append=TRUE)
+    write(paste("MoviePopGenFreq=",MoviePopGenFreq), file=Metadatafile, append=TRUE)
 # 		write(paste("ENVI_ID=",ENVI_ID), file= Metadatafile, append=TRUE)
 # 		write(paste("ENVI_DIR=",ENVI_DIR), file= Metadatafile, append=TRUE)
 # 		write(paste("s_low=",s_low), file= Metadatafile, append=TRUE)
@@ -155,7 +130,7 @@ if (LOCUS_TYPE=="SELECTION"){
 # 		DensityPerKM <- round(sum(N_vect)/(X_Dist_Adj*Y_Dist_Adj), 3)
 # 		
 # 		#Need to convert selection-vector to same size as island vector
-# 		if (LOCUS_TYPE=="SELECTION"){
+# 		if (LocusType=="SELECTION"){
 # 		s_VECT <- ConvertEnviToIslands(s_VECT, IslandSize, X_Demes, Y_Demes)
 # 		Envi_VECT <- ConvertEnviToIslands(Envi_VECT, IslandSize, X_Demes, Y_Demes)
 # 		}
@@ -229,11 +204,11 @@ if (LOCUS_TYPE=="SELECTION"){
 		############################################################
 		#Step 3: Selection on offspring
 		############################################################
-		if(LOCUS_TYPE=="SELECTION"){
+		if(LocusType=="SELECTION"){
 				selVECT <- selection_C( migVECT, s_VECT)*OccupiedVect
 			}
 		
-		if(LOCUS_TYPE=="NEUTRAL"){
+		if(LocusType=="NEUTRAL"){
 			selVECT <- migVECT
 		}
 			
@@ -318,7 +293,7 @@ return()
 # 	#Write main output to a file in main directory
 # 	#################################	
 # 		setwd(headDir)	
-# 		allVars <- c(MODEL_TYPE, LOCUS_TYPE, runname, X_Demes, Y_Demes, Scale, u, GEN, LandscapeMatGen, FSTgen, MOVIE, MOVIEgen, m, IslandSize, Island_N, DispersalKernel_FilePath, K_All, GEN_Refugia, r_growth, Refugia_StartMat_FilePath, AlleeDensity, MOVIE_Density, Refugia_Selection, ENVI_ID, ENVI_DIR, s_low, s_high,  p_start, p_LS_end, He_LS_start, He_LS_end, FST_All, Landscape_Corr, TotalT, "\n", sep=" ")
+# 		allVars <- c(MODEL_TYPE, LocusType, runname, X_Demes, Y_Demes, Scale, u, GEN, LandscapeMatGen, FSTgen, MOVIE, MOVIEgen, m, IslandSize, Island_N, DispersalKernel_FilePath, K_All, GEN_Refugia, r_growth, Refugia_StartMat_FilePath, AlleeDensity, MOVIE_Density, Refugia_Selection, ENVI_ID, ENVI_DIR, s_low, s_high,  p_start, p_LS_end, He_LS_start, He_LS_end, FST_All, Landscape_Corr, TotalT, "\n", sep=" ")
 # 		write(allVars, FileName_LandscapeMetadata , append=TRUE, ncolumns=length(allVars))
 
 }#end function

@@ -4,7 +4,7 @@ setwd("LandscapeSimulatorCode/")
 
 outDir = "output" 
 LocusType = "NEUTRAL"                       
-InitialPopMat = read.table("Demographies/northern_refuge") 
+InitialPopMat = as.matrix(read.table("Demographies/northern_refuge"))
 pMat = 0.2 # initial allele frequency on landscape, or a matrix of allele frequencies
 Kmat = 1000 # carrying capacity of each deme, or a matrix of carrying capacity of each cell
 u=1e-06 # mutation rate
