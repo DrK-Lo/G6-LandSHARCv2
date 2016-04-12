@@ -15,8 +15,7 @@ LandSHARC_IBD <- function(outDir, LocusType,
                       MoviePopSize = FALSE, MoviePopGenFreq = 100,
                       ENVI_matrix = NULL,  
                       s_high = NULL, s_low=-s_high){
-	# make sure mig mat sums to 1
-	startT <- tic()
+
 	
 	
 #############################################################		
