@@ -1,0 +1,17 @@
+1343668901Demography
+Metadata
+Landscape Size (km)=  270 270
+Adjusted Landscape Size (km) =  270 270
+Gamma =  0.75
+SD =  1
+Cell Size (km)= 0.75
+Grid Size =  360 360
+N_Tot =  1e+07
+CAP on carrying capacity =  NA
+MOVIE =  TRUE
+r (growth rate in cell) =  NA
+K_cell (carrying capacity) =  77
+Num Refugia =  1
+RefugiaSides =  bottom
+RefugiaLocs =  135
+RefugiaStartN =  10010 
