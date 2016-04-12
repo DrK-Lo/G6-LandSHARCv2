@@ -140,9 +140,11 @@ getRunName <- function(){
 	paste(round(unclass(Sys.time())), round(runif(1)*100000), sep="_")
 }
 
-plotAlleleFreqImage <- function(X_Locs, Y_Locs, P_plotMAT, gen, FST_All){
-    P_plotMAT=matrix(as.vector(P_plotMAT), nrow=length(X_Locs)-1, ncol=length(Y_Locs)-1)    
-	image.plot(X_Locs, Y_Locs, P_plotMAT, main=paste("Allele freqs:", gen, "gens, FST=",round(FST_All,5)), breaks=seq(0,1,0.01), col=two.colors(n=100, start="darkblue", end="darkred", middle=grey(0.8), alpha=1.0),cex.main=0.8)	
+plotAlleleFreqImage <- function(X_Locs, Y_Locs, P_plotMAT, gen){
+    P_plotMAT=matrix(as.vector(P_plotMAT), nrow=length(X_Locs), ncol=length(Y_Locs))    
+	image.plot(X_Locs, Y_Locs, P_plotMAT, main=
+               paste("Allele freqs:", gen, "gens"), 
+              breaks=seq(0,1,0.01), col=two.colors(n=100, start="darkblue", end="darkred", middle=grey(0.8), alpha=1.0),cex.main=0.8)	
 }
 
 

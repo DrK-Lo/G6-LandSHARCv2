@@ -9,10 +9,9 @@ LandSHARC_IBD <- function(outDir, LocusType,
                       u=1e-06, r_growth, 
                       DispersalKernel, 
                       # need to check if p_start can be vector
-                      Gen, GenFreqMatOut=GEN, GenPopMatOut=GEN,
-                      MoviePfreq=FALSE, MoviePGenFreq = 100, 
+                      Gen, GenPFreqMatOut=Gen, GenPopMatOut=Gen,
+                      MoviePfreq=FALSE, MoviePopSize = FALSE, MovieGenFreq = 100, 
                       AlleeDensity = 2, 
-                      MoviePopSize = FALSE, MoviePopGenFreq = 100,
                       ENVI_matrix = NULL,  
                       s_high = NULL, s_low=-s_high, runname=NA){
 
@@ -36,13 +35,14 @@ LandSHARC_IBD <- function(outDir, LocusType,
 	#Get name for this run
 	#########################################
 	if(is.na(runname)){runname <- getRunName()}
+  print(runname)
   if (file.exists(outDir)){
     setwd(outDir); print(c("Moving to existing output directory", getwd()))
   } else {
-    dir.create(outDir); ; print(c("Creating output directory", getwd()))
+    dir.create(outDir); setwd(outDir); print(c("Creating output directory", getwd()))
   }
 
-	 MovieDirname <- paste(outDir,"/", runname,"Movie",sep="")
+	 MovieDirname <- paste(runname,"Movie",sep="")
     dir.create(MovieDirname)
 		
 	#########################################
@@ -71,7 +71,7 @@ if (LocusType=="SELECTION"){
 		
 		#Write selection matrix to file
 		#########################################	
-		setwd(MovieDirname)
+		#setwd(MovieDirname)
 		write(as.vector(s_VECT), file = paste(runname, "_SelectionMatrix", sep=""), ncol=Y_Demes)
 		
 		pdf(file=paste(runname,"_SelectionLandscape_Envi",ENVI_ID,".pdf",sep=""), width=8, height=3, bg="white")
@@ -87,7 +87,7 @@ if (LocusType=="SELECTION"){
 	#########################################	
   X_Demes <- nrow(InitialPopMat)
   Y_Demes <- ncol(InitialPopMat)
- 		Metadatafile <- paste(outDir,"/",runname,"Metadata",sep="")
+ 		Metadatafile <- paste(runname,"Metadata",sep="")
  		write(runname, file= Metadatafile) 
  		write(paste("Date=",date()), file= Metadatafile, append=TRUE)
  		write(paste("LocusType=",LocusType), file= Metadatafile, append=TRUE)
@@ -96,17 +96,15 @@ if (LocusType=="SELECTION"){
     write(paste("InitialPopMat=", paste(InitialPopMat, collapse=",")), file= Metadatafile, append=TRUE)
  		write(paste("u=",u), file= Metadatafile, append=TRUE)			
  		write(paste("pMat=",paste(pMat, collapse=",")), file= Metadatafile, append=TRUE)
- 		write(paste("Gen=",gen), file= Metadatafile, append=TRUE)
- 		write(paste("LandscapeMatGen=",LandscapeMatGen), file= Metadatafile, append=TRUE)
+ 		write(paste("Gen=",Gen), file= Metadatafile, append=TRUE)
  		write(paste("DispersalKernel=", paste(DispersalKernel, collapse="")), file= Metadatafile, append=TRUE)
  		write(paste("Kmat=",paste(Kmat, collapse=",")), file= Metadatafile, append=TRUE)
  		write(paste("r_growth=",r_growth), file= Metadatafile, append=TRUE)
    	write(paste("AlleeDensity=",AlleeDensity), file= Metadatafile, append=TRUE)
 
   	write(paste("MoviePfreq=",MoviePfreq), file= Metadatafile, append=TRUE)
-    write(paste("MoviePGenFreq=",MoviePGenFreq), file=Metadatafile, append=TRUE)
+    write(paste("MovieGenFreq=",MovieGenFreq), file=Metadatafile, append=TRUE)
     write(paste("MoviePopSize=",MoviePopSize), file=Metadatafile, append=TRUE)
-    write(paste("MoviePopGenFreq=",MoviePopGenFreq), file=Metadatafile, append=TRUE)
 # 		write(paste("ENVI_ID=",ENVI_ID), file= Metadatafile, append=TRUE)
 # 		write(paste("ENVI_DIR=",ENVI_DIR), file= Metadatafile, append=TRUE)
 # 		write(paste("s_low=",s_low), file= Metadatafile, append=TRUE)
@@ -117,46 +115,30 @@ if (LocusType=="SELECTION"){
 	#Setup starting population and allele frequencies
 	#########################################			
 #############################################################	
-	
-	### ISLAND MODEL
-	##############################
-# 	if (MODEL_TYPE=="ISLAND"){
-# 		TotIslandSize <- IslandSize*IslandSize
-# 		NumIslands <- (X_Demes*Y_Demes)/(IslandSize*IslandSize)	
-# 		N_vect <- rep(Island_N, NumIslands)
-# 		vectorsize <- NumIslands	
-# 		OccupiedVect <- rep(1, vectorsize)
-# 		P_freqMAT <- rep(p_start, vectorsize)
-# 		DensityPerKM <- round(sum(N_vect)/(X_Dist_Adj*Y_Dist_Adj), 3)
-# 		
-# 		#Need to convert selection-vector to same size as island vector
-# 		if (LocusType=="SELECTION"){
-# 		s_VECT <- ConvertEnviToIslands(s_VECT, IslandSize, X_Demes, Y_Demes)
-# 		Envi_VECT <- ConvertEnviToIslands(Envi_VECT, IslandSize, X_Demes, Y_Demes)
-# 		}
-# 	}
-
 		vectorsize<- X_Demes*Y_Demes
-		MigMat <- as.matrix(read.table(DispersalKernel_FilePath))
-		MigVect <- as.vector(MigMat)
-		K_Vect <- rep(K_All, vectorsize)
-
-			OccupiedVect <- InitialPopVect
-			OccupiedVect[which(InitialPopVect>0)]=1
-			N_vect <- InitialPopVect
-			P_scaleVECT <- migration_C(OccupiedVect, X_Demes, Y_Demes, MigMat)
+    MigMat <- as.matrix(DispersalKernel)
+    if(length(Kmat)==1){K_Vect <- rep(Kmat, vectorsize)}else{
+      K_Vect <- as.vector(Kmat) # careful here, could be subject to recycling
+    }
+    InitialPopVect <- as.vector(InitialPopMat)
+		OccupiedVect <- InitialPopVect
+		OccupiedVect[which(InitialPopVect>0)]=1
+    N_vect <- InitialPopVect
+		  # P_scaleVECT <- migration_C(OccupiedVect, X_Demes, Y_Demes, MigVect)
         # this is doing some thing weird
-			P_freqMAT <- rep(p_start, vectorsize)*OccupiedVect
-  	PopVect2<-InitialPopVect
+    PopVect2<-InitialPopVect
 		AtEQ <- FALSE
 		EqGen<-NA
+    if(length(pMat)==1){P_freqMAT <- rep(pMat, vectorsize)*OccupiedVect}else{
+      P_freqMAT <- pMat
+    }
 		
 #############################################################		
 	#########################################
 	# Loop over generations and let evolution happen
 	##########################################
 	
-		for (gen in 1:GEN){
+  for (gen in 1:Gen){
 			if (sum(is.na(PopVect2))>0){print("Error: NAs in Abundance vector"); break;}
 
 			if (AtEQ==FALSE){
@@ -164,22 +146,23 @@ if (LocusType=="SELECTION"){
 				Last_Occupied <- Last_PopVect
 				Last_Occupied[Last_PopVect>0]=1
 			
-				Fecundity_Vect <- PopVect2 + r_growth*PopVect2*(K_All-PopVect2)/K_All #logistic
-								
+        growth <- (r_growth*PopVect2*(K_Vect-PopVect2)/K_Vect)
+        growth[growth<0 & K_Vect==0] <- 0
+          # here the infinite values indicate 0 carrying capacity
+				  # any adults in those demes have 0 reproductive value
+        Fecundity_Vect <- PopVect2 +  growth#logistic
+				Fecundity_Vect[K_Vect==0] <- 0
+        
 				PopVect <-migration_C(Fecundity_Vect, X_Demes, Y_Demes, MigMat)  #this is the next generation
-				PopVect[PopVect<AlleeDensity]=0	
+				PopVect[PopVect<AlleeDensity | K_Vect==0]=0	
+          # any juveniles that migrate to patches with 0 carrying capacity bite the dust
 				if(sum(PopVect)==0){print("Sorry you went extinct!"); break;}
 				
 				OccupiedVect <- PopVect
 				OccupiedVect[PopVect>0]=1	 #These cells become occupied in this time step
 					
-				if(gen>100 & sum(Last_PopVect==round(PopVect))==(X_Demes*Y_Demes) & AtEQ == FALSE){AtEQ=TRUE; EqGen=gen; print(c("Eq has been reached at gen =", gen))} #if at equilibrium, tell it
+				if(gen>100 & sum(Last_PopVect==round(PopVect))==(X_Demes*Y_Demes) & AtEQ == FALSE){AtEQ=TRUE; EqGen=gen; print(c("Demographic Eq has been reached at gen =", gen))} #if at equilibrium, tell it
 			}#end if AtEQ 
-			
-			if (AtEQ==TRUE & gen==(EqGen+1)){
-			Fecundity_Vect <- PopVect + r_growth*PopVect*(K_Vect-PopVect)/K_Vect
-			PopVect <- migration_C(Fecundity_Vect, X_Demes, Y_Demes, MigMat)
-			}#end if
 		
 			PopVect2 <- round(PopVect)			# round pop Vect
 
@@ -228,72 +211,40 @@ if (LocusType=="SELECTION"){
 
 			#Write pdf Image of allele frequencies to a file
 			##################################	
-			if (gen%%MOVIEgen==0 & MOVIE==TRUE){
-				 setwd(MovieDirname)
-				
-				 P_plot = migVECT
+			if (gen%%MovieGenFreq==0 & MoviePfreq==TRUE){
+				      P_plot = migVECT
 		          P_plot[OccupiedVect==0]=NA
 		          P_plotMAT <- matrix(P_plot, X_Demes, Y_Demes)
-				pdf(file=paste(runname,"ImageAfterMig_",gen, ".pdf",sep=""), width=4, height=3, bg="white")
+				png(file=paste(MovieDirname,"/",runname,"ImageAfterMig_",gen, ".png",sep=""), 
+            width=4, height=3, bg="white", units="in",res=200)
 	             par(mar=c(3,3,1,1))
-	             plotAlleleFreqImage(X_Locs, Y_Locs, P_plotMAT, gen, FST_All)	#need to edit this function
+	             plotAlleleFreqImage(1:X_Demes, 1:Y_Demes, P_plotMAT, gen)	#need to edit this function
 	             dev.off()			
 			}	
 			
 			#Write pdfs Image of density to a file for refugia model
 			##################################	
-			if (MOVIE_Density==TRUE & gen%%MOVIEgen==0){
+			if (MoviePopSize ==TRUE & gen%%MovieGenFreq==0){
 				Density <- PopVect2
 				Density[OccupiedVect==0]=NA
 				Density_plot <- matrix(Density, X_Demes, Y_Demes)
-			pdf(file=paste(runname,"ImageDensity_",gen, ".pdf",sep=""), width=4, height=3 ,bg="white");  par(mar=c(3,3,1,1))
-			image.plot(Density_plot, x=X_Locs, y=Y_Locs,  main=paste(runname, "Density at gen", gen),cex.main=0.8, xlab="", ylab="")
+			png(file=paste(MovieDirname,"/",runname,"ImageDensity_",gen, ".png",sep=""), 
+          width=4, height=3, units="in",res=200 ,bg="white");  
+      par(mar=c(3,3,1,1))
+			image.plot(Density_plot, x=1:X_Demes, y=1:Y_Demes,  main=paste(runname, "Density at gen", gen),cex.main=0.8, xlab="", ylab="")
 			dev.off()	
 			}
 			
 			#Write matrices of landscape to a file
 			##################################		
-			if (gen%%LandscapeMatGen==0){
-				setwd(MovieDirname) 
-	            write(as.vector(migVECT), file=paste(runname,"Matrix_AlleleFreqs_Gen", gen,sep=""), ncolumns=Y_Demes)
-			}
-				
-		}#end output if Island or IBD
-
-} # end loop through gen
-
-return()
-  # return p freq, pop size, 
-
-
-# ############################################################				
-# ######################## Write Ouputs ####################################
-# ############################################################			
-# 	#################################
-# 	#Write time elapsed to metadata
-# 	#################################	
-# 		setwd(MovieDirname)
-# 			write(" ", file=Metadatafile, append=TRUE)
-# 			write(paste("Number generations elapsed =", gen), file=Metadatafile, append=TRUE)
-# 
-# 			p_LS_end <- mean(migVECT)
-# 			He_LS_start	<- 	p_start*(1-p_start)	
-# 			He_LS_end <- mean(migVECT*(1-migVECT))
-# 
-# 			write(paste("p_LS_end=",p_LS_end), file= Metadatafile, append=TRUE)
-# 			write(paste("He_LS_start=",p_LS_end), file= Metadatafile, append=TRUE)
-# 			write(paste("He_LS_end=",p_LS_end), file= Metadatafile, append=TRUE)
-# 			endT <- toc()
-# 			TotalT <- round(endT-startT)
-# 			write(paste("Time Elapsed (sec)",TotalT), file=Metadatafile, append=TRUE)
-# 
-# 	print(c(runname, p_start))
-# 
-# 	#################################
-# 	#Write main output to a file in main directory
-# 	#################################	
-# 		setwd(headDir)	
-# 		allVars <- c(MODEL_TYPE, LocusType, runname, X_Demes, Y_Demes, Scale, u, GEN, LandscapeMatGen, FSTgen, MOVIE, MOVIEgen, m, IslandSize, Island_N, DispersalKernel_FilePath, K_All, GEN_Refugia, r_growth, Refugia_StartMat_FilePath, AlleeDensity, MOVIE_Density, Refugia_Selection, ENVI_ID, ENVI_DIR, s_low, s_high,  p_start, p_LS_end, He_LS_start, He_LS_end, FST_All, Landscape_Corr, TotalT, "\n", sep=" ")
-# 		write(allVars, FileName_LandscapeMetadata , append=TRUE, ncolumns=length(allVars))
-
+    		if (gen %in% GenPFreqMatOut){
+           write(as.vector(migVECT), file=paste(runname,"Matrix_AlleleFreqs_Gen_", gen,sep=""), ncolumns=Y_Demes)
+    		}
+        if (gen %in% GenPopMatOut){
+          write(as.vector(PopVect2), file=paste(runname,"Matrix_PopSize_Gen_", gen,sep=""), ncolumns=Y_Demes)
+        }
+  #if(gen%%10==0){print(gen)}
+  #print(gen)
+  } # end loop through gen
+  setwd("..")
 }#end function
